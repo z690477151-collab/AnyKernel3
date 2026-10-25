@@ -245,6 +245,13 @@ python3 "$SCRIPT_DIR/normalize_trace_ctx.py" "$SUSFS_PATCH"
 
 patch -p1 < "$SUSFS_PATCH" || true
 
+# The pinned 5.10 baseline needs its original SELinux wiring with newer SUSFS.
+if [[ "$KSU_VARIANT" == "SukiSU" && "$ANDROID_VERSION" == "android12" && "$KERNEL_VERSION" == "5.10" ]] \
+  && [[ "$(git -C "$KERNEL_ROOT/KernelSU" rev-parse HEAD)" == "7f1c299af463d008e66e714077eb6a8079ff722b" ]]; then
+  python3 "$SCRIPT_DIR/../sukisu_compat/legacy_susfs.py" \
+    "$KERNEL_ROOT/common" "$KERNEL_ROOT/KernelSU" "$SUSFS4KSU"
+fi
+
 # ==================== FinaSU 新 selinux_hide 模型适配 ====================
 # 自 FinaSU v0.1.0-preview1 起，kernel/feature/selinux_hide.c 换成了 tiann 新形态：
 #   移除 fake_state；统一用 backup_sepolicy + security_context_to_sid_with_policy(..., &orig_sid_p, &orig_rc_p)（8 参）；
@@ -762,3 +769,4 @@ for SUSFS_SRC in fs/proc/task_mmu.c fs/namespace.c; do
     exit 1
   fi
 done
+
